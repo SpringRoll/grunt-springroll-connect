@@ -11,6 +11,9 @@ module.exports = function(grunt)
 	var request = require('request');
 	var Download = require('download');
 
+	var fs = require( 'fs' );
+	var path = require( 'path' );
+
 	grunt.registerMultiTask('springroll', desc, function()
 	{
 		var completed = this.async();
@@ -73,7 +76,8 @@ module.exports = function(grunt)
 			tasks[game.slug] = downloadArchive.bind(
 				download, 
 				game.slug, 
-				apiCall(game, options)
+				apiCall(game, options),
+				options
 			);
 		});
 
@@ -129,9 +133,10 @@ module.exports = function(grunt)
 	}
 
 	// Handle the request
-	function downloadArchive(slug, call, done)
+	function downloadArchive(slug, call, options, done)
 	{
 		grunt.log.write('Downloading "' + slug + '" ... ');
+
 		request(call, function(err, response, body)
 		{
 			if (err) return done(err);
@@ -142,7 +147,18 @@ module.exports = function(grunt)
 			{
 				return done(result.error + ' with game "' + slug + '"');
 			}
+
+			if( options.json )
+			{
+				grunt.log.write('Writing json ... ');
+
+				var writeStream = fs.createWriteStream( path.join( options.dest, slug + '.json' ) );
+				writeStream.write( JSON.stringify(result.data) );
+				writeStream.end();
+			}
+
 			grunt.log.write('Installing ... ');
+
 			this.get(result.data.url).run(function(err, files)
 			{
 				if (err) 
