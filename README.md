@@ -46,6 +46,13 @@ Type: `String`
 
 A unique access token used for SpringRoll Connect to download non-public releases. It's recommended that you set your access token through an environmental variable. See section below `SPRINGROLL_TOKEN`.
 
+#### options.json
+
+Type: `Boolean`
+Default: `false`
+
+Save JSON metadata associated with a game upon download. This data includes information like the version, title and capabilities.
+
 #### options.debug
 
 Type: `Boolean`

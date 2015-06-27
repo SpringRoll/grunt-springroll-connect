@@ -10,9 +10,10 @@ module.exports = function(grunt)
 	var async = require('async');
 	var request = require('request');
 	var Download = require('download');
-
-	var fs = require( 'fs' );
-	var path = require( 'path' );
+	var fs = require('fs');
+	var path = require('path');
+	var mkdirp = require('mkdirp');
+	var colors = require('colors');
 
 	grunt.registerMultiTask('springroll', desc, function()
 	{
@@ -35,6 +36,9 @@ module.exports = function(grunt)
 		{
 			return grunt.log.fail("Destination (options.dest) is required");
 		}
+
+		// Create the destination if it doesn't exist
+		mkdirp.sync(options.dest);
 
 		var games;
 		var tasks = {};
@@ -135,7 +139,7 @@ module.exports = function(grunt)
 	// Handle the request
 	function downloadArchive(slug, call, options, done)
 	{
-		grunt.log.write('Downloading "' + slug + '" ... ');
+		grunt.log.write('Downloading '.gray + slug.yellow + ' ... '.gray);
 
 		request(call, function(err, response, body)
 		{
@@ -148,16 +152,16 @@ module.exports = function(grunt)
 				return done(result.error + ' with game "' + slug + '"');
 			}
 
-			if( options.json )
+			if (options.json)
 			{
-				grunt.log.write('Writing json ... ');
+				grunt.log.write('Writing json ... '.gray);
 
-				var writeStream = fs.createWriteStream( path.join( options.dest, slug + '.json' ) );
-				writeStream.write( JSON.stringify(result.data) );
+				var writeStream = fs.createWriteStream(path.join(options.dest, slug + '.json'));
+				writeStream.write(JSON.stringify(result.data, null, options.debug ? "\t":""));
 				writeStream.end();
 			}
 
-			grunt.log.write('Installing ... ');
+			grunt.log.write('Installing ... '.gray);
 
 			this.get(result.data.url).run(function(err, files)
 			{
@@ -165,7 +169,7 @@ module.exports = function(grunt)
 				{
 					return done('Unable to download archive for game "' + slug + '"');
 				}
-				grunt.log.writeln('Done.');
+				grunt.log.writeln('Done.'.green);
 				done(null, files);
 			});
 		}
