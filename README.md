@@ -69,7 +69,14 @@ Each task contains a list of games. The game can be a `String` (the `slug`) or a
 Type: `String`
 Default: `undefined`
 
-The SpringRoll Connect game slug. 
+The SpringRoll Connect game slug. If slug is undefined, must define a `game.bundleId`.
+
+#### game.bundleId
+
+Type: `String`
+Default: `undefined`
+
+The SpringRoll Connect game bundle identifier, alternative to `game.slug`.
 
 #### game.status
 

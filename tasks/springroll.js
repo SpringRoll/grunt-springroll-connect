@@ -72,14 +72,16 @@ module.exports = function(grunt)
 				game = { slug: game };
 			}
 
+			var id = game.slug || game.bundleId;
+
 			// Download file request
 			var download = new Download({mode: '755', extract: true})
-				.dest(options.dest + '/' + game.slug);
+				.dest(options.dest + '/' + id);
 
 			// Create the async task
-			tasks[game.slug] = downloadArchive.bind(
+			tasks[id] = downloadArchive.bind(
 				download, 
-				game.slug, 
+				id,
 				apiCall(game, options),
 				options
 			);
@@ -98,32 +100,33 @@ module.exports = function(grunt)
 
 	function apiCall(game, options)
 	{		
-		if (!game.slug)
+		if (!game.slug && !game.bundleId)
 		{
-			return grunt.log.fail("Game must contain a slug");
+			return grunt.log.fail("Game must contain a slug or bundleId");
 		}
 
-		var call = options.server + '/api/release/' + game.slug + '/';
+		var id = game.slug || game.bundleId;
 
-		if (game.version) 
-		{
-			call += 'version/' + game.version;
-		}
-		else if (game.commit) 
-		{
-			call += 'commit/' + game.commit;
-		}
-		else if (game.status) 
-		{
-			call += game.status;
-		}
-		else 
-		{
-			call += options.status;
-		}
+		var call = options.server + '/api/release/' + id;
 
 		call += '?archive=true';
 
+		if (game.version) 
+		{
+			call += '&version=' + game.version;
+		}
+		else if (game.commit) 
+		{
+			call += '&commit=' + game.commit;
+		}
+		else if (game.status) 
+		{
+			call += '&status=' + game.status;
+		}
+		else 
+		{
+			call += '&status=' + options.status;
+		}
 		if (options.debug)
 		{
 			call += '&debug=true';
@@ -137,9 +140,9 @@ module.exports = function(grunt)
 	}
 
 	// Handle the request
-	function downloadArchive(slug, call, options, done)
+	function downloadArchive(id, call, options, done)
 	{
-		grunt.log.write('Downloading '.gray + slug.yellow + ' ... '.gray);
+		grunt.log.write('Downloading '.gray + id.yellow + ' ... '.gray);
 
 		request(call, function(err, response, body)
 		{
@@ -149,14 +152,14 @@ module.exports = function(grunt)
 
 			if (!result.success) 
 			{
-				return done(result.error + ' with game "' + slug + '"');
+				return done(result.error + ' with game "' + id + '"');
 			}
 
 			if (options.json)
 			{
 				grunt.log.write('Writing json ... '.gray);
 
-				var writeStream = fs.createWriteStream(path.join(options.dest, slug + '.json'));
+				var writeStream = fs.createWriteStream(path.join(options.dest, id + '.json'));
 				writeStream.write(JSON.stringify(result.data, null, options.debug ? "\t":""));
 				writeStream.end();
 			}
@@ -167,7 +170,7 @@ module.exports = function(grunt)
 			{
 				if (err) 
 				{
-					return done('Unable to download archive for game "' + slug + '"');
+					return done('Unable to download archive for game "' + id + '"');
 				}
 				grunt.log.writeln('Done.'.green);
 				done(null, files);
